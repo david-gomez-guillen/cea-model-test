@@ -10,7 +10,7 @@ get.parameters <- function() {
   return(list(
     list(
       name='p.healthy.cancer',
-      base.value=0.01
+      base.value=0.0001
     ),
     list(
       name='p.healthy.death',
