@@ -14,6 +14,7 @@ simulate <- function(strategies,
   incidence <- list()
 
   strata <- c('30-34', '35-39', '40-44', '45-49', '50-54', '55-59', '60-64', '65-69', '70-74')
+  p.healthy.cancer.original <- p.healthy.cancer
   for(strategy in strategies) {
     #Sys.sleep(3)
 
@@ -23,7 +24,6 @@ simulate <- function(strategies,
 
     cohort <- list()
     cohort[[1]] <- c(1,0,0)
-    p.healthy.cancer.original <- p.healthy.cancer
     for(year in seq(30, 74)) {
       state.costs <- c(0, 0, 0)
       state.utilities <- c(1, utility.cancer, 0)
