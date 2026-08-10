@@ -75,40 +75,48 @@ get.parameters <- function() {
   return(list(
     list(
       name='p.healthy.cancer',
-      base.value=0.0001
+      base.value=0.0001,
+      class='General'
     ),
     list(
       name='p.healthy.death',
-      base.value=0.0000
+      base.value=0.00001,
+      class='General'
     ),
     list(
       name='p.cancer.death',
-      base.value=0.0000
+      base.value=0.0001,
+      class='General' 
     ),
     list(
       name='p.screening.effective',
-      base.value=0.5
+      base.value=0.05,
+      class='Screening'
     ),
     list(
       name='p.treatment.effective',
-      base.value=0.005
+      base.value=0.05,
+      class='Treatment' 
     ),
     list(
       name='cost.screening',
-      base.value=100
+      base.value=10000,
+      class='Screening'
     ),
     list(
       name='cost.cancer.treatment',
-      base.value=10000,
-      max.value=50000
+      base.value=50000,
+      class='Treatment' 
     ),
     list(
       name='utility.cancer',
-      base.value=0.6
+      base.value=0.6,
+      class='General' 
     ),
     list(
       name='discount',
-      base.value=0.0
+      base.value=0.03,
+      class='General'
     )
   ))
 }
