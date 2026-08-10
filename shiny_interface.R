@@ -67,7 +67,12 @@ get.overview <- function() {
 
 get.strategies <- function() {
   # Hardcoded strategies for the model. In a real application, these could be loaded from a file or database.
-  return(c('no_intervention', 'screening', 'treatment'))
+  #return(c('no_intervention', 'screening', 'treatment'))
+  return(list(
+    list(name='no_intervention', display.name='No intervention'),
+    list(name='screening', display.name='Screening'),
+    list(name='treatment', display.name='Treatment')
+  ))
 }
 
 get.parameters <- function() {
@@ -75,46 +80,55 @@ get.parameters <- function() {
   return(list(
     list(
       name='p.healthy.cancer',
-      base.value=0.0001,
+      display.name='Annual probability of developing cancer while healthy',
+      base.value=0.075,
       class='General'
     ),
     list(
       name='p.healthy.death',
+      display.name='Annual probability of death while healthy',
       base.value=0.00001,
       class='General'
     ),
     list(
       name='p.cancer.death',
+      display.name='Annual probability of death while having cancer',
       base.value=0.0001,
-      class='General' 
+      class='General'
     ),
     list(
       name='p.screening.effective',
+      display.name='Proportion of cancer cases that are prevented by screening',
       base.value=0.05,
       class='Screening'
     ),
     list(
       name='p.treatment.effective',
+      display.name='Annual probability of the regular treatment curing cancer (back to healthy)',
       base.value=0.05,
-      class='Treatment' 
+      class='Treatment'
     ),
     list(
       name='cost.screening',
+      display.name='Annual cost per healthy person under screening',
       base.value=10000,
       class='Screening'
     ),
     list(
       name='cost.cancer.treatment',
+      display.name='Annual cost per person with cancer under regular treatment',
       base.value=50000,
-      class='Treatment' 
+      class='Treatment'
     ),
     list(
       name='utility.cancer',
+      display.name='Utility of a year spent with cancer',
       base.value=0.6,
-      class='General' 
+      class='General'
     ),
     list(
       name='discount',
+      display.name='Discount rate',
       base.value=0.03,
       class='General'
     )
