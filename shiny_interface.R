@@ -77,7 +77,19 @@ get.calibration.schemes <- function() {
       description='Example calibration',
       parameters='p.healthy.cancer',
       target=list(
-        `Cancer incidence`=c(.01, .05, .08, .1, .11, .12, .13, .135, .14)
+        # Each target is a named list assigning a value to a specific stratum.
+        # Strata not listed here are not calibrated against (e.g. burn-in strata).
+        `Cancer incidence`=list(
+          `30-34`=.01,
+          `35-39`=.05,
+          `40-44`=.08,
+          `45-49`=.1,
+          `50-54`=.11,
+          `55-59`=.12,
+          `60-64`=.13,
+          `65-69`=.135,
+          `70-74`=.14
+        )
       ),
       strata=get.strata(),
       initial_guess=rep(.075, 9),
@@ -92,12 +104,15 @@ get.calibration.schemes <- function() {
 
 calibration.error <- function(pars, target) {
   calibration.strategy <- 'no_intervention'
-  target.inc <- target$`Cancer incidence` 
+  # The target is a named list with one entry per stratum, so it is flattened into
+  # a named numeric vector to match the simulated values by stratum name.
+  target.inc <- unlist(target$`Cancer incidence`)
   result <- tryCatch({
     results <- run.simulation(calibration.strategy, pars)
     cancer.incidence <- results$incidence[[calibration.strategy]]
     names(cancer.incidence) <- get.strata()
-    error <- sum((cancer.incidence-target.inc)^2)
+    # Only the strata present in the target contribute to the error.
+    error <- sum((cancer.incidence[names(target.inc)]-target.inc)^2)
     result <- list(
       error=error,
       output=list(cancer.incidence=cancer.incidence)
@@ -105,8 +120,8 @@ calibration.error <- function(pars, target) {
     result
   }, error=function(e) {
     error <- Inf
-    cancer.incidence <- rep(NA, length(target.inc))
-    names(cancer.incidence) <- names(target.inc)
+    cancer.incidence <- rep(NA, length(get.strata()))
+    names(cancer.incidence) <- get.strata()
     result <- list(
       error=error,
       output=list(cancer.incidence=cancer.incidence)
