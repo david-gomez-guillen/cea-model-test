@@ -11,7 +11,9 @@ get.overview <- function() {
     '',
     'A minimal cost-effectiveness model of a hypothetical cancer, used as an example and',
     'test bed for this shiny interface. It compares doing nothing against a screening',
-    'programme and against treating diagnosed cases, over the lifetime of a single cohort.',
+    'programme, against treating diagnosed cases, and against treating them with a more',
+    'effective but more toxic and more expensive experimental drug, over the lifetime of a',
+    'single cohort.',
     '',
     '## Model structure',
     '',
@@ -32,11 +34,14 @@ get.overview <- function() {
     '|---|---|---|',
     '| `p.healthy.cancer` | 0.0001 | Annual probability of developing cancer while healthy. May also be a vector with one value per stratum, which is what the calibration estimates. |',
     '| `p.healthy.death` | 0 | Annual probability of death while healthy (background mortality). |',
-    '| `p.cancer.death` | 0 | Annual probability of death while having cancer. |',
+    '| `p.cancer.death` | 0 | Annual probability of death while having cancer, under every strategy except `experimental_treatment`. |',
     '| `p.screening.effective` | 0.5 | Multiplier applied to incidence under `screening`. |',
     '| `p.treatment.effective` | 0.005 | Annual probability of moving back from *Cancer* to *Healthy* under `screening` and `treatment`. |',
+    '| `p.experimental.treatment.effective` | 0.01 | Annual probability of moving back from *Cancer* to *Healthy* under `experimental_treatment`. |',
+    '| `p.experimental.cancer.death` | 0.005 | Annual probability of death while having cancer under `experimental_treatment`, replacing `p.cancer.death`. |',
     '| `cost.screening` | 100 | Annual cost per healthy person under `screening`. |',
     '| `cost.cancer.treatment` | 10000 | Annual cost per person with cancer under `treatment`. |',
+    '| `cost.experimental.cancer.treatment` | 25000 | Annual cost per person with cancer under `experimental_treatment`. |',
     '| `utility.cancer` | 0.6 | Utility of a year spent in *Cancer*. *Healthy* is worth 1 and *Dead* 0. |',
     '| `discount` | 0 | Annual discount rate, applied to both costs and utilities as `(1-discount)^t`. |',
     '',
@@ -67,7 +72,7 @@ get.overview <- function() {
 
 get.strategies <- function() {
   # Hardcoded strategies for the model. In a real application, these could be loaded from a file or database.
-  return(c('no_intervention', 'screening', 'treatment'))
+  return(c('no_intervention', 'screening', 'treatment', 'experimental_treatment'))
 }
 
 get.parameters <- function() {
@@ -75,40 +80,63 @@ get.parameters <- function() {
   return(list(
     list(
       name='p.healthy.cancer',
-      base.value=0.0001
+      base.value=0.0001,
+      class='General'
     ),
     list(
       name='p.healthy.death',
-      base.value=0.0000
+      base.value=0.00001,
+      class='General'
     ),
     list(
       name='p.cancer.death',
-      base.value=0.0000
+      base.value=0.0001,
+      class='General' 
     ),
     list(
       name='p.screening.effective',
-      base.value=0.5
+      base.value=0.05,
+      class='Screening'
     ),
     list(
       name='p.treatment.effective',
-      base.value=0.005
+      base.value=0.05,
+      class='Treatment' 
+    ),
+    list(
+      name='p.experimental.treatment.effective',
+      base.value=0.1,
+      class='Treatment'  
+    ),
+    list(
+      name='p.experimental.cancer.death',
+      base.value=0.005,
+      class='Treatment'
     ),
     list(
       name='cost.screening',
-      base.value=100
+      base.value=10000,
+      class='Screening'
     ),
     list(
       name='cost.cancer.treatment',
-      base.value=10000,
-      max.value=50000
+      base.value=50000,
+      class='Treatment' 
+    ),
+    list(
+      name='cost.experimental.cancer.treatment',
+      base.value=75000,
+      class='Treatment'
     ),
     list(
       name='utility.cancer',
-      base.value=0.6
+      base.value=0.6,
+      class='General' 
     ),
     list(
       name='discount',
-      base.value=0.0
+      base.value=0.03,
+      class='General'
     )
   ))
 }
@@ -127,8 +155,11 @@ run.simulation <- function(strategies, pars) {
                      p.cancer.death=pars[['p.cancer.death']],
                      p.screening.effective=pars[['p.screening.effective']],
                      p.treatment.effective=pars[['p.treatment.effective']],
+                     p.experimental.treatment.effective=pars[['p.experimental.treatment.effective']],
+                     p.experimental.cancer.death=pars[['p.experimental.cancer.death']],
                      cost.screening=pars[['cost.screening']],
                      cost.cancer.treatment=pars[['cost.cancer.treatment']],
+                     cost.experimental.cancer.treatment=pars[['cost.experimental.cancer.treatment']],
                      utility.cancer=pars[['utility.cancer']],
                      discount=pars[['discount']])
   return(results)

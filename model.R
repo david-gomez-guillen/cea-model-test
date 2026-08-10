@@ -4,8 +4,11 @@ simulate <- function(strategies,
                      p.cancer.death,
                      p.screening.effective,
                      p.treatment.effective,
+                     p.experimental.treatment.effective,
+                     p.experimental.cancer.death,
                      cost.screening,
                      cost.cancer.treatment,
+                     cost.experimental.cancer.treatment,
                      utility.cancer,
                      discount) {
 
@@ -36,6 +39,9 @@ simulate <- function(strategies,
         # If p.healthy.cancer is not a list, we assume it's a single value that applies to all age groups.
         p.healthy.cancer <- p.healthy.cancer.original
       }
+      # Most strategies share the background probability of dying while having cancer,
+      # so it is only overridden by the ones that change it.
+      p.cancer.death.strategy <- p.cancer.death
       if (strategy == 'no_intervention') {
         state.costs[1] <- 0
         state.costs[2] <- 0
@@ -44,17 +50,26 @@ simulate <- function(strategies,
       } else if (strategy == 'screening') {
         state.costs[1] <- cost.screening
         state.costs[2] <- 0
-        p.cancer <- p.healthy.cancer * p.screening.effective
+        p.cancer <- p.healthy.cancer * (1-p.screening.effective)
         p.cancer.healthy <- p.treatment.effective
       } else if (strategy == 'treatment') {
         state.costs[1] <- 0
         state.costs[2] <- cost.cancer.treatment
         p.cancer <- p.healthy.cancer
         p.cancer.healthy <- p.treatment.effective
+      } else if (strategy == 'experimental_treatment') {
+        # Like 'treatment', but the experimental drug cures cancer more often and is also
+        # more toxic, so both the cancer to healthy and the cancer to death probabilities
+        # are higher, as is the cost of treating each case.
+        state.costs[1] <- 0
+        state.costs[2] <- cost.experimental.cancer.treatment
+        p.cancer <- p.healthy.cancer
+        p.cancer.healthy <- p.experimental.treatment.effective
+        p.cancer.death.strategy <- p.experimental.cancer.death
       }
 
       tp.matrix <- matrix(c(1-p.cancer-p.healthy.death, p.cancer, p.healthy.death,
-                            p.cancer.healthy, 1-p.cancer.healthy-p.cancer.death, p.cancer.death,
+                            p.cancer.healthy, 1-p.cancer.healthy-p.cancer.death.strategy, p.cancer.death.strategy,
                             0, 0, 1),
                           nrow=3, byrow = TRUE)
                           
