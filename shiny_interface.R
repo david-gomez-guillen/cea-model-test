@@ -4,75 +4,25 @@ source('model.R')
 
 get.overview <- function() {
   # Markdown shown in the Overview tab (see get.overview.markdown() in shiny-cea).
-  # Everything described here is derived from simulate() in model.R and from the
-  # rest of this interface, so it must be kept in sync with them.
-  return(paste(c(
-    '# Test model',
-    '',
-    'A minimal cost-effectiveness model of a hypothetical cancer, used as an example and',
-    'test bed for this shiny interface. It compares doing nothing against a screening',
-    'programme, against treating diagnosed cases, and against treating them with a more',
-    'effective but more toxic and more expensive experimental drug, over the lifetime of a',
-    'single cohort.',
-    '',
-    '## Model structure',
-    '',
-    'The model is a three-state Markov cohort model with annual cycles:',
-    '',
-    '- **Healthy**: alive and cancer-free. The whole cohort starts here.',
-    '- **Cancer**: alive with cancer. Reachable from *Healthy*, and (except under',
-    '  `no_intervention`) can go back to *Healthy* when treatment is effective.',
-    '- **Dead**: absorbing state, reached from both *Healthy* and *Cancer*.',
-    '',
-    'The cohort is followed from age 30 to age 74 (45 cycles), with no new entries.',
-    'Transitions are applied at the end of each cycle, after costs and utilities of the',
-    'cycle have been accrued.',
-    '',
-    '## Parameters',
-    '',
-    '| Parameter | Base value | Meaning |',
-    '|---|---|---|',
-    '| `p.healthy.cancer` | 0.0001 | Annual probability of developing cancer while healthy. May also be a vector with one value per stratum, which is what the calibration estimates. |',
-    '| `p.healthy.death` | 0 | Annual probability of death while healthy (background mortality). |',
-    '| `p.cancer.death` | 0 | Annual probability of death while having cancer, under every strategy except `experimental_treatment`. |',
-    '| `p.screening.effective` | 0.5 | Multiplier applied to incidence under `screening`. |',
-    '| `p.treatment.effective` | 0.005 | Annual probability of moving back from *Cancer* to *Healthy* under `screening` and `treatment`. |',
-    '| `p.experimental.treatment.effective` | 0.01 | Annual probability of moving back from *Cancer* to *Healthy* under `experimental_treatment`. |',
-    '| `p.experimental.cancer.death` | 0.005 | Annual probability of death while having cancer under `experimental_treatment`, replacing `p.cancer.death`. |',
-    '| `cost.screening` | 100 | Annual cost per healthy person under `screening`. |',
-    '| `cost.cancer.treatment` | 10000 | Annual cost per person with cancer under `treatment`. |',
-    '| `cost.experimental.cancer.treatment` | 25000 | Annual cost per person with cancer under `experimental_treatment`. |',
-    '| `utility.cancer` | 0.6 | Utility of a year spent in *Cancer*. *Healthy* is worth 1 and *Dead* 0. |',
-    '| `discount` | 0 | Annual discount rate, applied to both costs and utilities as `(1-discount)^t`. |',
-    '',
-    '## Strata',
-    '',
-    'Results are reported by five-year age group, from 30-34 to 70-74.',
-    '',
-    '## Outputs',
-    '',
-    '- `summary`: one row per strategy with the cost (`C`, the mean discounted cost per',
-    '  cycle) and the effect (`E`, the discounted quality-adjusted life years accumulated',
-    '  over the whole horizon).',
-    '- `incidence`: cancer incidence per stratum, i.e. the mean over the five years of the',
-    '  age group of the proportion of the healthy cohort that develops cancer.',
-    '',
-    '## Calibration',
-    '',
-    'The `standard` scheme calibrates `p.healthy.cancer` against cancer incidence targets,',
-    'one per age group, using the `no_intervention` strategy. Because the parameter is',
-    'estimated per stratum, the calibration searches over nine values, one for each age',
-    'group, starting from 0.075 everywhere.',
-    '',
-    'The error is the sum of squared differences between the simulated and the target',
-    'incidence over the strata present in the target; parameter sets that make the',
-    'simulation fail get an infinite error.'
-  ), collapse='\n'))
+  # The text lives in overview.md. Everything described there is derived from
+  # simulate() in model.R and from the rest of this interface, so it must be kept
+  # in sync with them.
+  # This function is called long after this file is sourced, when the working
+  # directory is no longer the model directory, so overview.md is resolved against
+  # the MODEL_PATH set by the app (falling back to the working directory when the
+  # interface is used standalone).
+  model.dir <- Sys.getenv('MODEL_PATH', unset='.')
+  return(paste(readLines(file.path(model.dir, 'overview.md')), collapse='\n'))
 }
 
 get.strategies <- function() {
   # Hardcoded strategies for the model. In a real application, these could be loaded from a file or database.
-  return(c('no_intervention', 'screening', 'treatment', 'experimental_treatment'))
+  return(list(
+    list(name='no_intervention', display.name='No intervention'),
+    list(name='screening', display.name='Screening'),
+    list(name='treatment', display.name='Treatment'),
+    list(name='experimental_treatment', display.name='Experimental Treatment')
+  ))
 }
 
 get.parameters <- function() {
@@ -81,7 +31,7 @@ get.parameters <- function() {
     list(
       name='p.healthy.cancer',
       display.name='Annual probability of developing cancer while healthy',
-      base.value=0.0001,
+      base.value=0.075,
       class='General'
     ),
     list(
