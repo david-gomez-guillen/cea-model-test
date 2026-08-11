@@ -44,7 +44,7 @@ simulate <- function(strategies,
       } else if (strategy == 'screening') {
         state.costs[1] <- cost.screening
         state.costs[2] <- 0
-        p.cancer <- p.healthy.cancer * p.screening.effective
+        p.cancer <- p.healthy.cancer * (1-p.screening.effective)
         p.cancer.healthy <- p.treatment.effective
       } else if (strategy == 'treatment') {
         state.costs[1] <- 0
