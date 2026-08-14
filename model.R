@@ -10,7 +10,13 @@ simulate <- function(strategies,
                      cost.cancer.treatment,
                      cost.experimental.cancer.treatment,
                      utility.cancer,
-                     discount) {
+                     discount,
+                     delay=1) {
+
+  # Artificial delay (in seconds) to emulate a computationally expensive model.
+  if (delay > 0) {
+    Sys.sleep(delay)
+  }
 
   df <- data.frame()
   cohort.states <- list()
@@ -19,8 +25,6 @@ simulate <- function(strategies,
   strata <- c('30-34', '35-39', '40-44', '45-49', '50-54', '55-59', '60-64', '65-69', '70-74')
   p.healthy.cancer.original <- p.healthy.cancer
   for(strategy in strategies) {
-    #Sys.sleep(3)
-
     costs <- c()
     utilities <- c()
     cancer.incidence <- c()
