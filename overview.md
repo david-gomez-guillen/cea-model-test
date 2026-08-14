@@ -1,3 +1,21 @@
+> # ⚠️ DEMONSTRATION MODEL ONLY — NOT A SOURCE OF TRUTH ⚠️
+>
+> **This model exists solely as an example and test bed for this interface.**
+>
+> The disease it describes is hypothetical, and the structure, the parameter
+> values, the costs, the utilities, the calibration targets and every result
+> produced here are **illustrative and entirely invented**. They are *not* derived
+> from any evidence, they have not been validated against any real population, and
+> they have not been reviewed by anyone clinically or economically.
+>
+> **Nothing shown in this app may be used, cited or quoted as evidence about the
+> cost-effectiveness of any screening or treatment programme**, or to inform any
+> clinical, policy, funding or purchasing decision. Any ICER, life-year, QALY,
+> cost or incidence figure it reports is a number that came out of a toy model and
+> means nothing outside of it.
+
+---
+
 # Test model
 
 A minimal cost-effectiveness model of a hypothetical cancer, used as an example and
