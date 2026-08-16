@@ -129,9 +129,6 @@ get.calibration.schemes <- function() {
       initial_guess=rep(.075, 9),
       error_function=calibration.error,
       latent_space_training_set=generate.training.dataset,
-      latent_space_training_set_size=500,
-      latent_space_training_epochs=50,
-      latent_space_latent_dim=7,
       other.plots=NULL
     )))
 }
