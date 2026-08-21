@@ -54,19 +54,19 @@ get.parameters <- function() {
     list(
       name='p.treatment.effective',
       display.name='Annual probability of the regular treatment curing cancer (back to healthy)',
-      base.value=0.05,
+      base.value=0.03,
       class='Treatment'
     ),
     list(
       name='cost.screening',
       display.name='Annual cost per healthy person under screening',
-      base.value=10000,
+      base.value=15000,
       class='Screening'
     ),
     list(
       name='cost.cancer.treatment',
       display.name='Annual cost per person with cancer under regular treatment',
-      base.value=50000,
+      base.value=200000,
       class='Treatment'
     ),
     list(
