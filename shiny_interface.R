@@ -30,7 +30,7 @@ get.parameters <- function() {
     list(
       name='p.healthy.cancer',
       display.name='Annual probability of developing cancer while healthy',
-      base.value=0.075,
+      base.value=0.13,
       class='General'
     ),
     list(
@@ -43,6 +43,12 @@ get.parameters <- function() {
       name='p.cancer.death',
       display.name='Annual probability of death while having cancer',
       base.value=0.0001,
+      class='General'
+    ),
+    list(
+      name='p.cancer.recovery',
+      display.name='Annual probability of cancer resolving on its own (back to healthy)',
+      base.value=0.3,
       class='General'
     ),
     list(
@@ -96,6 +102,7 @@ run.simulation <- function(strategies, pars) {
                      p.healthy.cancer=pars[['p.healthy.cancer']],
                      p.healthy.death=pars[['p.healthy.death']],
                      p.cancer.death=pars[['p.cancer.death']],
+                     p.cancer.recovery=pars[['p.cancer.recovery']],
                      p.screening.effective=pars[['p.screening.effective']],
                      p.treatment.effective=pars[['p.treatment.effective']],
                      cost.screening=pars[['cost.screening']],
@@ -126,7 +133,7 @@ get.calibration.schemes <- function() {
         )
       ),
       strata=get.strata(),
-      initial_guess=rep(.075, 9),
+      initial_guess=rep(.13, 9),
       error_function=calibration.error,
       latent_space_training_set=generate.training.dataset,
       other.plots=NULL
