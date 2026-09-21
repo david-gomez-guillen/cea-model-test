@@ -2,6 +2,7 @@ simulate <- function(strategies,
                      p.healthy.cancer,
                      p.healthy.death,
                      p.cancer.death,
+                     p.cancer.recovery,
                      p.screening.effective,
                      p.treatment.effective,
                      p.experimental.treatment.effective,
@@ -11,7 +12,7 @@ simulate <- function(strategies,
                      cost.experimental.cancer.treatment,
                      utility.cancer,
                      discount,
-                     delay=1) {
+                     delay=0) {
 
   # Artificial delay (in seconds) to emulate a computationally expensive model.
   if (delay > 0) {
@@ -43,6 +44,8 @@ simulate <- function(strategies,
         # If p.healthy.cancer is not a list, we assume it's a single value that applies to all age groups.
         p.healthy.cancer <- p.healthy.cancer.original
       }
+      # Cancer resolves on its own at p.cancer.recovery under every strategy; treating
+      # it adds to that baseline.
       # Most strategies share the background probability of dying while having cancer,
       # so it is only overridden by the ones that change it.
       p.cancer.death.strategy <- p.cancer.death
@@ -50,17 +53,17 @@ simulate <- function(strategies,
         state.costs[1] <- 0
         state.costs[2] <- 0
         p.cancer <- p.healthy.cancer
-        p.cancer.healthy <- 0
+        p.cancer.healthy <- p.cancer.recovery
       } else if (strategy == 'screening') {
         state.costs[1] <- cost.screening
         state.costs[2] <- 0
         p.cancer <- p.healthy.cancer * (1-p.screening.effective)
-        p.cancer.healthy <- 0 
+        p.cancer.healthy <- p.cancer.recovery
       } else if (strategy == 'treatment') {
         state.costs[1] <- 0
         state.costs[2] <- cost.cancer.treatment
         p.cancer <- p.healthy.cancer
-        p.cancer.healthy <- p.treatment.effective
+        p.cancer.healthy <- p.cancer.recovery + p.treatment.effective
       } else if (strategy == 'experimental_treatment') {
         # Like 'treatment', but the experimental drug cures cancer more often and is also
         # more toxic, so both the cancer to healthy and the cancer to death probabilities
@@ -68,7 +71,7 @@ simulate <- function(strategies,
         state.costs[1] <- 0
         state.costs[2] <- cost.experimental.cancer.treatment
         p.cancer <- p.healthy.cancer
-        p.cancer.healthy <- p.experimental.treatment.effective
+        p.cancer.healthy <- p.cancer.recovery + p.experimental.treatment.effective
         p.cancer.death.strategy <- p.experimental.cancer.death
       }
 
@@ -79,7 +82,10 @@ simulate <- function(strategies,
                           
       costs <- c(costs, state.costs %*% cohort[[year-29]] * (1-discount)^(year-30))
       utilities <- c(utilities, state.utilities %*% cohort[[year-29]] * (1-discount)^(year-30))
-      cancer.incidence <- c(cancer.incidence, (cohort[[year-29]][1] * p.cancer) / sum(cohort[[year-29]][1]))
+      # New cases over everyone alive (healthy and with cancer), not just over the
+      # healthy, so that the incidence of a stratum depends on the parameters of the
+      # earlier ones through the size of the healthy pool.
+      cancer.incidence <- c(cancer.incidence, (cohort[[year-29]][1] * p.cancer) / sum(cohort[[year-29]][1:2]))
       cohort[[year-29+1]]  <- as.numeric(cohort[[year-29]] %*% tp.matrix)
     }
     cohort.states[[strategy]] <- cohort
