@@ -25,6 +25,10 @@ get.strategies <- function() {
   ))
 }
 
+constraint1 <- function(params) {
+	return(params[['p.healthy.death']] < params[['p.cancer.death']])
+}
+
 get.parameters <- function() {
   # Hardcoded parameters for the model. In a real application, these could be loaded from a file or database.
   return(list(
@@ -38,13 +42,15 @@ get.parameters <- function() {
       name='p.healthy.death',
       display.name='Annual probability of death while healthy',
       base.value=0.00001,
-      class='General'
+      class='General',
+      constraints=list(`Probability of death while healthy must be higher than death while having cancer`=constraint1)
     ),
     list(
       name='p.cancer.death',
       display.name='Annual probability of death while having cancer (except the experimental treatment)',
       base.value=0.0001,
-      class='General'
+      class='General',
+      constraints=list(`Probability of death while healthy must be higher than death while having cancer`=constraint1)
     ),
     list(
       name='p.cancer.recovery',
