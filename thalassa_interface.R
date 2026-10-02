@@ -7,12 +7,7 @@ get.overview <- function() {
   # The text lives in overview.md. Everything described there is derived from
   # simulate() in model.R and from the rest of this interface, so it must be kept
   # in sync with them.
-  # This function is called long after this file is sourced, when the working
-  # directory is no longer the model directory, so overview.md is resolved against
-  # the MODEL_PATH set by the app (falling back to the working directory when the
-  # interface is used standalone).
-  model.dir <- Sys.getenv('MODEL_PATH', unset='.')
-  return(paste(readLines(file.path(model.dir, 'overview.md')), collapse='\n'))
+  return(paste(readLines('overview.md'), collapse='\n'))
 }
 
 get.strategies <- function() {
@@ -128,6 +123,15 @@ get.model.states <- function() {
         'p.cancer.death'
       )
     )
+  ))
+}
+
+get.code.sample <- function() {
+  # Code shown in the Code panel of the Overview tab, one tab per entry, for
+  # whoever wants to see how the model works. The whole of model.R is written to
+  # be read, so it is shown as it is.
+  return(list(
+    `model.R`=paste(readLines('model.R'), collapse='\n')
   ))
 }
 

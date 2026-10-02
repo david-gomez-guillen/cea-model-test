@@ -1,3 +1,24 @@
+# A minimal cost-effectiveness model of a hypothetical cancer.
+#
+# It is a Markov cohort model. Rather than following people one by one, it keeps
+# track of which share of a group of people, the cohort, is in each health state,
+# and moves those shares from state to state once a year.
+#
+#   States:      Healthy, Cancer, Dead
+#   Cycle:       one year
+#   Horizon:     from age 30 to age 74
+#   Strategies:  no_intervention, screening, treatment
+#
+# For each strategy the model adds up what the cohort costs and how much health
+# it enjoys. Comparing those two totals between strategies is what a
+# cost-effectiveness analysis does.
+
+START.AGE <- 30
+END.AGE <- 74
+
+# Results by age are reported per five-year age group: 30-34, 35-39, ..., 70-74.
+AGE.GROUP.SIZE <- 5
+
 simulate <- function(strategies,
                      p.healthy.cancer,
                      p.healthy.death,
@@ -8,84 +29,110 @@ simulate <- function(strategies,
                      cost.screening,
                      cost.cancer.treatment,
                      utility.cancer,
-                     discount,
-                     delay=0) {
+                     discount) {
 
-  # Artificial delay (in seconds) to emulate a computationally expensive model.
-  if (delay > 0) {
-    Sys.sleep(delay)
-  }
+  ages <- START.AGE:END.AGE
 
-  df <- data.frame()
-  cohort.states <- list()
+  summary <- data.frame()
   incidence <- list()
+  cohort.info <- list()
 
-  strata <- c('30-34', '35-39', '40-44', '45-49', '50-54', '55-59', '60-64', '65-69', '70-74')
-  p.healthy.cancer.original <- p.healthy.cancer
-  for(strategy in strategies) {
+  for (strategy in strategies) {
+
+    # ---- What the strategy changes ----------------------------------------
+    # A strategy is the same model with a few numbers changed. Screening
+    # prevents some cancers and is paid for every healthy person. Treatment
+    # raises the chance of recovery and is paid for every person with cancer.
+    if (!strategy %in% c('no_intervention', 'screening', 'treatment'))
+      stop('Unknown strategy: ', strategy)
+
+    screening <- strategy == 'screening'
+    treatment <- strategy == 'treatment'
+
+    # Cancer can resolve on its own under every strategy. Treatment adds to that.
+    p.recovery <- if (treatment) p.cancer.recovery + p.treatment.effective else p.cancer.recovery
+
+    # What a person in each state costs in a year, and the quality of life of
+    # that year: 1 is a year in full health and 0 is being dead.
+    state.costs <- c(healthy = if (screening) cost.screening else 0,
+                     cancer = if (treatment) cost.cancer.treatment else 0,
+                     dead = 0)
+    state.utilities <- c(healthy = 1, cancer = utility.cancer, dead = 0)
+
+    # ---- The cohort ---------------------------------------------------------
+    # The share of the cohort in each state. Everyone starts healthy, and the
+    # three shares always add up to 1.
+    cohort <- c(healthy = 1, cancer = 0, dead = 0)
+
+    # One value per year, filled in as the cohort ages.
     costs <- c()
     utilities <- c()
-    cancer.incidence <- c()
+    yearly.incidence <- c()
+    cohort.trace <- list(cohort)
 
-    cohort <- list()
-    cohort[[1]] <- c(1,0,0)
-    for(year in seq(30, 74)) {
-      state.costs <- c(0, 0, 0)
-      state.utilities <- c(1, utility.cancer, 0)
+    for (age in ages) {
+      years.elapsed <- age - START.AGE
 
-      if (is.list(p.healthy.cancer.original)) {
-        # In this example, if p.healthy.cancer is a list, it means that we have different probabilities for different age groups. 
-        # We need to select the appropriate one based on the current year.
-        p.healthy.cancer <- p.healthy.cancer.original[[(year-30) %/% 5 + 1]]
+      # ---- 1. Probability of developing cancer this year --------------------
+      # It is either one value for every age or a list with one value per age
+      # group, in which case the one of the current age is used.
+      if (is.list(p.healthy.cancer)) {
+        age.group <- years.elapsed %/% AGE.GROUP.SIZE + 1
+        p.onset <- p.healthy.cancer[[age.group]]
       } else {
-        # If p.healthy.cancer is not a list, we assume it's a single value that applies to all age groups.
-        p.healthy.cancer <- p.healthy.cancer.original
+        p.onset <- p.healthy.cancer
       }
-      # Cancer resolves on its own at p.cancer.recovery under every strategy; treating
-      # it adds to that baseline.
-      if (strategy == 'no_intervention') {
-        state.costs[1] <- 0
-        state.costs[2] <- 0
-        p.cancer <- p.healthy.cancer
-        p.cancer.healthy <- p.cancer.recovery
-      } else if (strategy == 'screening') {
-        state.costs[1] <- cost.screening
-        state.costs[2] <- 0
-        p.cancer <- p.healthy.cancer * (1-p.screening.effective)
-        p.cancer.healthy <- p.cancer.recovery
-      } else if (strategy == 'treatment') {
-        state.costs[1] <- 0
-        state.costs[2] <- cost.cancer.treatment
-        p.cancer <- p.healthy.cancer
-        p.cancer.healthy <- p.cancer.recovery + p.treatment.effective
-      }
+      if (screening) p.onset <- p.onset * (1 - p.screening.effective)
 
-      tp.matrix <- matrix(c(1-p.cancer-p.healthy.death, p.cancer, p.healthy.death,
-                            p.cancer.healthy, 1-p.cancer.healthy-p.cancer.death, p.cancer.death,
-                            0, 0, 1),
-                          nrow=3, byrow = TRUE)
-                          
-      costs <- c(costs, state.costs %*% cohort[[year-29]] * (1-discount)^(year-30))
-      utilities <- c(utilities, state.utilities %*% cohort[[year-29]] * (1-discount)^(year-30))
-      # New cases over everyone alive (healthy and with cancer), not just over the
-      # healthy, so that the incidence of a stratum depends on the parameters of the
-      # earlier ones through the size of the healthy pool.
-      cancer.incidence <- c(cancer.incidence, (cohort[[year-29]][1] * p.cancer) / sum(cohort[[year-29]][1:2]))
-      cohort[[year-29+1]]  <- as.numeric(cohort[[year-29]] %*% tp.matrix)
+      # ---- 2. Transition matrix -----------------------------------------------
+      # Row: the state a person is in now. Column: the state a year later.
+      # Each row adds up to 1, since everyone has to end up somewhere, so the
+      # probability of staying is whatever the other transitions leave.
+      # Dead is an absorbing state: once there, nobody leaves.
+      transitions <- matrix(
+        c(1 - p.onset - p.healthy.death, p.onset,                            p.healthy.death,
+          p.recovery,                    1 - p.recovery - p.cancer.death,    p.cancer.death,
+          0,                             0,                                  1),
+        nrow = 3, byrow = TRUE,
+        dimnames = list(names(cohort), names(cohort)))
+
+      # ---- 3. Costs and health of this year ---------------------------------
+      # Each state contributes its cost and its utility in proportion to the
+      # share of the cohort in it. Money and health count for less the further
+      # in the future they are, which is what discounting expresses: at a rate
+      # of 3%, what happens a year from now is worth 1 / 1.03 of the same today.
+      discount.factor <- 1 / (1 + discount)^years.elapsed
+      costs <- c(costs, sum(cohort * state.costs) * discount.factor)
+      utilities <- c(utilities, sum(cohort * state.utilities) * discount.factor)
+
+      # ---- 4. Cancer incidence of this year ---------------------------------
+      # New cases among the people alive. Only the healthy can develop cancer,
+      # but incidence is measured over everyone alive, as registries report it.
+      new.cases <- cohort[['healthy']] * p.onset
+      alive <- cohort[['healthy']] + cohort[['cancer']]
+      yearly.incidence <- c(yearly.incidence, new.cases / alive)
+
+      # ---- 5. Move the cohort one year forward ------------------------------
+      # Multiplying the shares by the matrix sends each share to where its row
+      # says, which gives the shares at the start of next year.
+      cohort <- drop(cohort %*% transitions)
+      cohort.trace <- c(cohort.trace, list(cohort))
     }
-    cohort.states[[strategy]] <- cohort
 
+    # ---- Results of the strategy ----------------------------------------------
+    # C is the average discounted cost per year and E the discounted
+    # quality-adjusted life years (QALYs) accumulated over the whole horizon.
+    summary <- rbind(summary, data.frame(strategy = strategy,
+                                         C = mean(costs),
+                                         E = sum(utilities)))
 
-    df <- rbind(df, data.frame(strategy=strategy,
-                      C=mean(costs),
-                      E=sum(utilities)))
+    # Incidence per age group: the average over the years of the group.
+    incidence[[strategy]] <- colMeans(matrix(yearly.incidence, nrow = AGE.GROUP.SIZE))
 
-    cancer.incidence <- colMeans(matrix(cancer.incidence, nrow=5))
-    incidence[[strategy]] <- cancer.incidence
+    cohort.info[[strategy]] <- cohort.trace
   }
-  return(list(
-    summary=df,
-    incidence=incidence,
-    cohort.info=cohort.states
-  ))
+
+  list(summary = summary,
+       incidence = incidence,
+       cohort.info = cohort.info)
 }
