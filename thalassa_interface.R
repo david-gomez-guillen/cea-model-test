@@ -120,6 +120,36 @@ get.strata <- function() {
   return(c('30-34', '35-39', '40-44', '45-49', '50-54', '55-59', '60-64', '65-69', '70-74'))
 }
 
+get.model.states <- function() {
+  # State diagram shown in the Overview tab, next to the text of overview.md. It
+  # describes the transition matrix of simulate() in model.R and must be kept in
+  # sync with it.
+  return(list(
+    title='Model states',
+    description='The three states of the cohort and the annual transitions between them. Hover a state or a transition for what drives it.',
+    nodes=data.frame(
+      id=c('healthy', 'cancer', 'dead'),
+      label=c('Healthy', 'Cancer', 'Dead'),
+      description=c(
+        'Alive and cancer-free. The whole cohort starts here.',
+        'Alive with cancer.',
+        'Absorbing state, reached from both Healthy and Cancer.'
+      )
+    ),
+    edges=data.frame(
+      from=c('healthy', 'cancer', 'healthy', 'cancer'),
+      to=c('cancer', 'healthy', 'dead', 'dead'),
+      label=c('Onset', 'Recovery', 'Death', 'Death'),
+      description=c(
+        'p.healthy.cancer, reduced by p.screening.effective under screening.',
+        'p.cancer.recovery, plus p.treatment.effective under treatment or p.experimental.treatment.effective under the experimental treatment.',
+        'p.healthy.death',
+        'p.cancer.death, replaced by p.experimental.cancer.death under the experimental treatment.'
+      )
+    )
+  ))
+}
+
 run.simulation <- function(strategies, pars) {
   # The pars vector should be transformed to the format expected by the simulate function. 
   # This is a simple mapping based on the parameter names.
