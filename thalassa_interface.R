@@ -20,9 +20,12 @@ get.strategies <- function() {
   ))
 }
 
-constraint1 <- function(params) {
-	return(params[['p.healthy.death']] < params[['p.cancer.death']])
+# Constraints: each returns TRUE when the value is acceptable, or the message
+# shown for it when it is not.
+prob.death.healthy.below.death.cancer <- function(par.name, params) {
+  if (params[['p.healthy.death']] >= params[['p.cancer.death']]) 'Probability of death while healthy must be below probability of death while having cancer' else TRUE
 }
+
 
 get.parameters <- function() {
   # Hardcoded parameters for the model. In a real application, these could be loaded from a file or database.
@@ -31,39 +34,57 @@ get.parameters <- function() {
       name='p.healthy.cancer',
       display.name='Annual probability of developing cancer while healthy',
       base.value=0.13,
-      class='General'
+      distribution='beta',
+      class='General',
+      min.value=0,
+      max.value=1
     ),
     list(
       name='p.healthy.death',
       display.name='Annual probability of death while healthy',
       base.value=0.00001,
+      distribution='beta',
       class='General',
-      constraints=list(`Probability of death while healthy must be higher than death while having cancer`=constraint1)
+      min.value=0,
+      max.value=1,
+      constraints=list(prob.death.healthy.below.death.cancer)
     ),
     list(
       name='p.cancer.death',
       display.name='Annual probability of death while having cancer (except the experimental treatment)',
       base.value=0.0001,
+      distribution='beta',
       class='General',
-      constraints=list(`Probability of death while healthy must be higher than death while having cancer`=constraint1)
+      min.value=0,
+      max.value=1,
+      constraints=list(prob.death.healthy.below.death.cancer)
     ),
     list(
       name='p.cancer.recovery',
       display.name='Annual probability of cancer resolving on its own (back to healthy)',
       base.value=0.3,
-      class='General'
+      distribution='beta',
+      class='General',
+      min.value=0,
+      max.value=1
     ),
     list(
       name='p.screening.effective',
       display.name='Proportion of cancer cases that are prevented by screening',
       base.value=0.05,
-      class='Screening'
+      distribution='beta',
+      class='Screening',
+      min.value=0,
+      max.value=1
     ),
     list(
       name='p.treatment.effective',
       display.name='Annual probability of the regular treatment curing cancer (back to healthy)',
       base.value=0.03,
-      class='Treatment'
+      distribution='beta',
+      class='Treatment',
+      min.value=0,
+      max.value=1
     ),
     list(
       name='p.experimental.treatment.effective',
@@ -81,13 +102,17 @@ get.parameters <- function() {
       name='cost.screening',
       display.name='Annual cost per healthy person under screening',
       base.value=15000,
-      class='Screening'
+      distribution='gamma',
+      class='Screening',
+      min.value=0
     ),
     list(
       name='cost.cancer.treatment',
       display.name='Annual cost per person with cancer under regular treatment',
       base.value=200000,
-      class='Treatment'
+      distribution='gamma',
+      class='Treatment',
+      min.value=0
     ),
     list(
       name='cost.experimental.cancer.treatment',
@@ -99,13 +124,18 @@ get.parameters <- function() {
       name='utility.cancer',
       display.name='Utility of a year spent with cancer',
       base.value=0.6,
-      class='General'
+      distribution='beta',
+      class='General',
+      min.value=0,
+      max.value=1
     ),
     list(
       name='discount',
       display.name='Discount rate',
       base.value=0.03,
-      class='General'
+      class='General',
+      min.value=0,
+      max.value=1
     )
   ))
 }
