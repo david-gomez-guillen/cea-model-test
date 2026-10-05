@@ -90,13 +90,19 @@ get.parameters <- function() {
       name='p.experimental.treatment.effective',
       display.name='Annual probability of the experimental treatment curing cancer (back to healthy)',
       base.value=0.1,
-      class='Treatment'
+      distribution='beta',
+      class='Treatment',
+      min.value=0,
+      max.value=1
     ),
     list(
       name='p.experimental.cancer.death',
       display.name='Annual probability of death while having cancer under the experimental treatment',
       base.value=0.005,
-      class='Treatment'
+      distribution='beta',
+      class='Treatment',
+      min.value=0,
+      max.value=1
     ),
     list(
       name='cost.screening',
@@ -118,7 +124,9 @@ get.parameters <- function() {
       name='cost.experimental.cancer.treatment',
       display.name='Annual cost per person with cancer under the experimental treatment',
       base.value=300000,
-      class='Treatment'
+      distribution='gamma',
+      class='Treatment',
+      min.value=0
     ),
     list(
       name='utility.cancer',
