@@ -21,26 +21,6 @@ get.strategies <- function() {
 
 # Constraints: each returns TRUE when the value is acceptable, or the message
 # shown for it when it is not.
-is.probability <- function(par.name, params) {
-  if (params[[par.name]] < 0 || params[[par.name]] > 1) 'Must be between 0 and 1' else TRUE
-}
-is.cost <- function(par.name, params) {
-  if (params[[par.name]] < 0) 'Must be non-negative' else TRUE
-}
-is.utility <- function(par.name, params) {
-  if (params[[par.name]] < 0 || params[[par.name]] > 1) 'Must be between 0 and 1' else TRUE
-}
-is.discount <- function(par.name, params) {
-  if (params[[par.name]] < 0 || params[[par.name]] > 1) 'Must be between 0 and 1' else TRUE
-}
-below <- function(other) function(par.name, params) {
-  if (params[[par.name]] >= params[[other]]) sprintf('Must be below %s (%g)', other, params[[other]])
-  else TRUE
-}
-above <- function(other) function(par.name, params) {
-  if (params[[par.name]] <= params[[other]]) sprintf('Must be above %s (%g)', other, params[[other]])
-  else TRUE
-}
 prob.death.healthy.below.death.cancer <- function(par.name, params) {
   if (params[['p.healthy.death']] >= params[['p.cancer.death']]) 'Probability of death while healthy must be below probability of death while having cancer' else TRUE
 }
@@ -55,7 +35,8 @@ get.parameters <- function() {
       base.value=0.13,
       distribution='beta',
       class='General',
-      constraints=list(is.probability)
+      min.value=0,
+      max.value=1
     ),
     list(
       name='p.healthy.death',
@@ -63,7 +44,9 @@ get.parameters <- function() {
       base.value=0.00001,
       distribution='beta',
       class='General',
-      constraints=list(is.probability, prob.death.healthy.below.death.cancer)
+      min.value=0,
+      max.value=1,
+      constraints=list(prob.death.healthy.below.death.cancer)
     ),
     list(
       name='p.cancer.death',
@@ -71,7 +54,9 @@ get.parameters <- function() {
       base.value=0.0001,
       distribution='beta',
       class='General',
-      constraints=list(is.probability, prob.death.healthy.below.death.cancer)
+      min.value=0,
+      max.value=1,
+      constraints=list(prob.death.healthy.below.death.cancer)
     ),
     list(
       name='p.cancer.recovery',
@@ -79,7 +64,8 @@ get.parameters <- function() {
       base.value=0.3,
       distribution='beta',
       class='General',
-      constraints=list(is.probability)
+      min.value=0,
+      max.value=1
     ),
     list(
       name='p.screening.effective',
@@ -87,7 +73,8 @@ get.parameters <- function() {
       base.value=0.05,
       distribution='beta',
       class='Screening',
-      constraints=list(is.probability)
+      min.value=0,
+      max.value=1
     ),
     list(
       name='p.treatment.effective',
@@ -95,7 +82,8 @@ get.parameters <- function() {
       base.value=0.03,
       distribution='beta',
       class='Treatment',
-      constraints=list(is.probability)
+      min.value=0,
+      max.value=1
     ),
     list(
       name='cost.screening',
@@ -103,7 +91,7 @@ get.parameters <- function() {
       base.value=15000,
       distribution='gamma',
       class='Screening',
-      constraints=list(is.cost)
+      min.value=0
     ),
     list(
       name='cost.cancer.treatment',
@@ -111,7 +99,7 @@ get.parameters <- function() {
       base.value=200000,
       distribution='gamma',
       class='Treatment',
-      constraints=list(is.cost)
+      min.value=0
     ),
     list(
       name='utility.cancer',
@@ -119,14 +107,16 @@ get.parameters <- function() {
       base.value=0.6,
       distribution='beta',
       class='General',
-      constraints=list(is.utility)
+      min.value=0,
+      max.value=1
     ),
     list(
       name='discount',
       display.name='Discount rate',
       base.value=0.03,
       class='General',
-      constraints=list(is.discount)
+      min.value=0,
+      max.value=1
     )
   ))
 }
