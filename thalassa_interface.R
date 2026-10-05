@@ -12,11 +12,47 @@ get.overview <- function() {
 
 get.strategies <- function() {
   # Hardcoded strategies for the model. In a real application, these could be loaded from a file or database.
+  # The descriptions and attributes describe what each strategy changes in
+  # simulate() in model.R, and must be kept in sync with it.
   return(list(
-    list(name='no_intervention', display.name='No intervention'),
-    list(name='screening', display.name='Screening'),
-    list(name='treatment', display.name='Treatment'),
-    list(name='experimental_treatment', display.name='Experimental Treatment')
+    list(
+      name='no_intervention',
+      display.name='No intervention',
+      description='Natural history of the cancer, with no screening or treatment costs. The reference the other strategies are compared against.',
+      attributes=list(intervention='None', population='Nobody', effect='None')
+    ),
+    list(
+      name='screening',
+      display.name='Screening',
+      description='Every healthy person is screened every year, at cost.screening each, which prevents a share p.screening.effective of the new cancer cases.',
+      attributes=list(intervention='Screening', population='Healthy', effect='Prevents cancer onset')
+    ),
+    list(
+      name='treatment',
+      display.name='Treatment',
+      description='Every person with cancer is treated every year, at cost.cancer.treatment each, which adds p.treatment.effective to the annual probability of recovery.',
+      attributes=list(intervention='Treatment', population='Cancer', effect='Increases recovery')
+    ),
+    list(
+      name='experimental_treatment',
+      display.name='Experimental Treatment',
+      description='Every person with cancer is treated every year with a more effective but more toxic drug, at cost.experimental.cancer.treatment each, which adds p.experimental.treatment.effective to the annual probability of recovery and replaces p.cancer.death with p.experimental.cancer.death.',
+      attributes=list(intervention='Experimental treatment', population='Cancer', effect='Increases recovery, changes death with cancer')
+    )
+  ))
+}
+
+get.strategy.attributes <- function() {
+  # What describes the strategies, shown as columns of the Strategies tab. Only
+  # the intervention is drawn on the base case plot, as the shape of the point.
+  return(list(
+    intervention=list(
+      label='Intervention',
+      plot='shape',
+      values=c(None='x', Screening='circle', Treatment='square', `Experimental treatment`='diamond')
+    ),
+    population='Applied to',
+    effect='Effect'
   ))
 }
 
