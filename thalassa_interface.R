@@ -19,9 +19,32 @@ get.strategies <- function() {
   ))
 }
 
-constraint1 <- function(params) {
-	return(params[['p.healthy.death']] < params[['p.cancer.death']])
+# Constraints: each returns TRUE when the value is acceptable, or the message
+# shown for it when it is not.
+is.probability <- function(par.name, params) {
+  if (params[[par.name]] < 0 || params[[par.name]] > 1) 'Must be between 0 and 1' else TRUE
 }
+is.cost <- function(par.name, params) {
+  if (params[[par.name]] < 0) 'Must be non-negative' else TRUE
+}
+is.utility <- function(par.name, params) {
+  if (params[[par.name]] < 0 || params[[par.name]] > 1) 'Must be between 0 and 1' else TRUE
+}
+is.discount <- function(par.name, params) {
+  if (params[[par.name]] < 0 || params[[par.name]] > 1) 'Must be between 0 and 1' else TRUE
+}
+below <- function(other) function(par.name, params) {
+  if (params[[par.name]] >= params[[other]]) sprintf('Must be below %s (%g)', other, params[[other]])
+  else TRUE
+}
+above <- function(other) function(par.name, params) {
+  if (params[[par.name]] <= params[[other]]) sprintf('Must be above %s (%g)', other, params[[other]])
+  else TRUE
+}
+prob.death.healthy.below.death.cancer <- function(par.name, params) {
+  if (params[['p.healthy.death']] >= params[['p.cancer.death']]) 'Probability of death while healthy must be below probability of death while having cancer' else TRUE
+}
+
 
 get.parameters <- function() {
   # Hardcoded parameters for the model. In a real application, these could be loaded from a file or database.
@@ -30,63 +53,80 @@ get.parameters <- function() {
       name='p.healthy.cancer',
       display.name='Annual probability of developing cancer while healthy',
       base.value=0.13,
-      class='General'
+      distribution='beta',
+      class='General',
+      constraints=list(is.probability)
     ),
     list(
       name='p.healthy.death',
       display.name='Annual probability of death while healthy',
       base.value=0.00001,
+      distribution='beta',
       class='General',
-      constraints=list(`Probability of death while healthy must be higher than death while having cancer`=constraint1)
+      constraints=list(is.probability, prob.death.healthy.below.death.cancer)
     ),
     list(
       name='p.cancer.death',
       display.name='Annual probability of death while having cancer',
       base.value=0.0001,
+      distribution='beta',
       class='General',
-      constraints=list(`Probability of death while healthy must be higher than death while having cancer`=constraint1)
+      constraints=list(is.probability, prob.death.healthy.below.death.cancer)
     ),
     list(
       name='p.cancer.recovery',
       display.name='Annual probability of cancer resolving on its own (back to healthy)',
       base.value=0.3,
-      class='General'
+      distribution='beta',
+      class='General',
+      constraints=list(is.probability)
     ),
     list(
       name='p.screening.effective',
       display.name='Proportion of cancer cases that are prevented by screening',
       base.value=0.05,
-      class='Screening'
+      distribution='beta',
+      class='Screening',
+      constraints=list(is.probability)
     ),
     list(
       name='p.treatment.effective',
       display.name='Annual probability of the regular treatment curing cancer (back to healthy)',
       base.value=0.03,
-      class='Treatment'
+      distribution='beta',
+      class='Treatment',
+      constraints=list(is.probability)
     ),
     list(
       name='cost.screening',
       display.name='Annual cost per healthy person under screening',
       base.value=15000,
-      class='Screening'
+      distribution='gamma',
+      class='Screening',
+      constraints=list(is.cost)
     ),
     list(
       name='cost.cancer.treatment',
       display.name='Annual cost per person with cancer under regular treatment',
       base.value=200000,
-      class='Treatment'
+      distribution='gamma',
+      class='Treatment',
+      constraints=list(is.cost)
     ),
     list(
       name='utility.cancer',
       display.name='Utility of a year spent with cancer',
       base.value=0.6,
-      class='General'
+      distribution='beta',
+      class='General',
+      constraints=list(is.utility)
     ),
     list(
       name='discount',
       display.name='Discount rate',
       base.value=0.03,
-      class='General'
+      class='General',
+      constraints=list(is.discount)
     )
   ))
 }
