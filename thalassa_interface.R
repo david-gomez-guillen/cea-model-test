@@ -12,35 +12,46 @@ get.overview <- function() {
 
 get.strategies <- function() {
   # Hardcoded strategies for the model. In a real application, these could be loaded from a file or database.
+  # The descriptions and attributes describe what each strategy changes in
+  # simulate() in model.R, and must be kept in sync with it.
   return(list(
-    list(name='no_intervention', display.name='No intervention'),
-    list(name='screening', display.name='Screening'),
-    list(name='treatment', display.name='Treatment')
+    list(
+      name='no_intervention',
+      display.name='No intervention',
+      description='Natural history of the cancer, with no screening or treatment costs. The reference the other strategies are compared against.',
+      attributes=list(intervention='None', population='Nobody', effect='None')
+    ),
+    list(
+      name='screening',
+      display.name='Screening',
+      description='Every healthy person is screened every year, at cost.screening each, which prevents a share p.screening.effective of the new cancer cases.',
+      attributes=list(intervention='Screening', population='Healthy', effect='Prevents cancer onset')
+    ),
+    list(
+      name='treatment',
+      display.name='Treatment',
+      description='Every person with cancer is treated every year, at cost.cancer.treatment each, which adds p.treatment.effective to the annual probability of recovery.',
+      attributes=list(intervention='Treatment', population='Cancer', effect='Increases recovery')
+    )
+  ))
+}
+
+get.strategy.attributes <- function() {
+  # What describes the strategies, shown as columns of the Strategies tab. Only
+  # the intervention is drawn on the base case plot, as the shape of the point.
+  return(list(
+    intervention=list(
+      label='Intervention',
+      plot='shape',
+      values=c(None='x', Screening='circle', Treatment='square')
+    ),
+    population='Applied to',
+    effect='Effect'
   ))
 }
 
 # Constraints: each returns TRUE when the value is acceptable, or the message
 # shown for it when it is not.
-is.probability <- function(par.name, params) {
-  if (params[[par.name]] < 0 || params[[par.name]] > 1) 'Must be between 0 and 1' else TRUE
-}
-is.cost <- function(par.name, params) {
-  if (params[[par.name]] < 0) 'Must be non-negative' else TRUE
-}
-is.utility <- function(par.name, params) {
-  if (params[[par.name]] < 0 || params[[par.name]] > 1) 'Must be between 0 and 1' else TRUE
-}
-is.discount <- function(par.name, params) {
-  if (params[[par.name]] < 0 || params[[par.name]] > 1) 'Must be between 0 and 1' else TRUE
-}
-below <- function(other) function(par.name, params) {
-  if (params[[par.name]] >= params[[other]]) sprintf('Must be below %s (%g)', other, params[[other]])
-  else TRUE
-}
-above <- function(other) function(par.name, params) {
-  if (params[[par.name]] <= params[[other]]) sprintf('Must be above %s (%g)', other, params[[other]])
-  else TRUE
-}
 prob.death.healthy.below.death.cancer <- function(par.name, params) {
   if (params[['p.healthy.death']] >= params[['p.cancer.death']]) 'Probability of death while healthy must be below probability of death while having cancer' else TRUE
 }
@@ -55,7 +66,8 @@ get.parameters <- function() {
       base.value=0.13,
       distribution='beta',
       class='General',
-      constraints=list(is.probability)
+      min.value=0,
+      max.value=1
     ),
     list(
       name='p.healthy.death',
@@ -63,7 +75,9 @@ get.parameters <- function() {
       base.value=0.00001,
       distribution='beta',
       class='General',
-      constraints=list(is.probability, prob.death.healthy.below.death.cancer)
+      min.value=0,
+      max.value=1,
+      constraints=list(prob.death.healthy.below.death.cancer)
     ),
     list(
       name='p.cancer.death',
@@ -71,7 +85,9 @@ get.parameters <- function() {
       base.value=0.0001,
       distribution='beta',
       class='General',
-      constraints=list(is.probability, prob.death.healthy.below.death.cancer)
+      min.value=0,
+      max.value=1,
+      constraints=list(prob.death.healthy.below.death.cancer)
     ),
     list(
       name='p.cancer.recovery',
@@ -79,7 +95,8 @@ get.parameters <- function() {
       base.value=0.3,
       distribution='beta',
       class='General',
-      constraints=list(is.probability)
+      min.value=0,
+      max.value=1
     ),
     list(
       name='p.screening.effective',
@@ -87,7 +104,8 @@ get.parameters <- function() {
       base.value=0.05,
       distribution='beta',
       class='Screening',
-      constraints=list(is.probability)
+      min.value=0,
+      max.value=1
     ),
     list(
       name='p.treatment.effective',
@@ -95,7 +113,8 @@ get.parameters <- function() {
       base.value=0.03,
       distribution='beta',
       class='Treatment',
-      constraints=list(is.probability)
+      min.value=0,
+      max.value=1
     ),
     list(
       name='cost.screening',
@@ -103,7 +122,7 @@ get.parameters <- function() {
       base.value=15000,
       distribution='gamma',
       class='Screening',
-      constraints=list(is.cost)
+      min.value=0
     ),
     list(
       name='cost.cancer.treatment',
@@ -111,7 +130,7 @@ get.parameters <- function() {
       base.value=200000,
       distribution='gamma',
       class='Treatment',
-      constraints=list(is.cost)
+      min.value=0
     ),
     list(
       name='utility.cancer',
@@ -119,14 +138,16 @@ get.parameters <- function() {
       base.value=0.6,
       distribution='beta',
       class='General',
-      constraints=list(is.utility)
+      min.value=0,
+      max.value=1
     ),
     list(
       name='discount',
       display.name='Discount rate',
       base.value=0.03,
       class='General',
-      constraints=list(is.discount)
+      min.value=0,
+      max.value=1
     )
   ))
 }
