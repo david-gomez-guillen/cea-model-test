@@ -237,7 +237,7 @@ get.calibration.schemes <- function() {
       initial_guess=rep(.13, 9),
       error_function=calibration.error,
       latent_space_training_set=generate.training.dataset,
-      other.plots=NULL
+      evaluation.plots=NULL
     )))
 }
 
