@@ -73,7 +73,8 @@ get.parameters <- function() {
       distribution='beta',
       class='General',
       min.value=0,
-      max.value=1
+      max.value=1,
+      dsa.range=c(0.1,0.2)
     ),
     list(
       name='p.healthy.death',
