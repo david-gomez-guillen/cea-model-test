@@ -272,6 +272,7 @@ get.calibration.schemes <- function() {
       strata=get.strata(),
       initial_guess=rep(.13, 9),
       error_function=calibration.error,
+      output_error=calibration.output.error,
       latent_space_training_set=generate.training.dataset,
       evaluation.plots=NULL
     )))
@@ -279,18 +280,14 @@ get.calibration.schemes <- function() {
 
 calibration.error <- function(pars, target) {
   calibration.strategy <- 'no_intervention'
-  # The target is a named list with one entry per stratum, so it is flattened into
-  # a named numeric vector to match the simulated values by stratum name.
-  target.inc <- unlist(target$`Cancer incidence`)
   result <- tryCatch({
     results <- run.simulation(calibration.strategy, pars)
     cancer.incidence <- results$incidence[[calibration.strategy]]
     names(cancer.incidence) <- get.strata()
-    # Only the strata present in the target contribute to the error.
-    error <- sum((cancer.incidence[names(target.inc)]-target.inc)^2)
+    output <- list(cancer.incidence=cancer.incidence)
     result <- list(
-      error=error,
-      output=list(cancer.incidence=cancer.incidence)
+      error=calibration.output.error(output, target),
+      output=output
     )
     result
   }, error=function(e) {
@@ -304,6 +301,17 @@ calibration.error <- function(pars, target) {
     result
   })
   return(result)
+}
+
+# The error of a simulated output against the target, without running the
+# model: the output_error of the scheme, and what calibration.error() scores its
+# own output by.
+calibration.output.error <- function(output, target) {
+  # The target is a named list with one entry per stratum, so it is flattened into
+  # a named numeric vector to match the simulated values by stratum name.
+  target.inc <- unlist(target$`Cancer incidence`)
+  # Only the strata present in the target contribute to the error.
+  sum((output$cancer.incidence[names(target.inc)]-target.inc)^2)
 }
 
 generate.training.dataset <- function(initial_guess, n, ...) {
