@@ -1,7 +1,7 @@
 # Test model
 
 A minimal cost-effectiveness model of a hypothetical cancer, used as an example and
-test bed for this shiny interface. It compares doing nothing against a screening
+test bed for THALASSA. It compares doing nothing against a screening
 programme and against treating diagnosed cases, over the lifetime of a single cohort.
 
 ## Model structure
@@ -75,6 +75,3 @@ Recovery is what keeps this range of targets reachable: without cases returning 
 *Healthy*, the healthy pool would be too depleted by middle age for an incidence of
 0.14 to be attainable at any probability.
 
-For the latent space methods, the training set is drawn by scaling the initial guess
-by a uniform random factor per parameter (capped at 1), with 500 samples, 50 training
-epochs and 7 latent dimensions.
