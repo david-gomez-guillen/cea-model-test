@@ -1,5 +1,7 @@
 # Test model
 
+Source: [github.com/david-gomez-guillen/cea-model-test](https://github.com/david-gomez-guillen/cea-model-test)
+
 A minimal cost-effectiveness model of a hypothetical cancer, used as an example and
 test bed for THALASSA. It compares doing nothing against a screening
 programme, against treating diagnosed cases, and against treating them with a more
