@@ -197,7 +197,7 @@ get.code.sample <- function() {
   ))
 }
 
-run.simulation <- function(strategies, pars) {
+run.simulation <- function(strategies, pars, make.plots=FALSE) {
   # The pars vector should be transformed to the format expected by the simulate function. 
   # This is a simple mapping based on the parameter names.
   results <- simulate(strategies,
@@ -211,7 +211,39 @@ run.simulation <- function(strategies, pars) {
                      cost.cancer.treatment=pars[['cost.cancer.treatment']],
                      utility.cancer=pars[['utility.cancer']],
                      discount=pars[['discount']])
+  # The plots of the Base case tab, which only it asks for: every other
+  # analysis runs without spending time on them.
+  if (make.plots) results$plots <- simulation.plots(results)
   return(results)
+}
+
+# The plots of each strategy, out of what simulate() returned. A plot is either
+# a numeric vector, its names being the x axis, or a data frame whose first
+# column is the x axis and whose other columns are a line each.
+simulation.plots <- function(results) {
+  plots <- list()
+  for (strategy in names(results$cohort.info)) {
+    # One row per year of age, the cohort at its start, plus the end of the last.
+    trace <- do.call(rbind, results$cohort.info[[strategy]])
+    ages <- START.AGE + seq_len(nrow(trace)) - 1
+    alive <- trace[, 'healthy'] + trace[, 'cancer']
+
+    incidence <- results$incidence[[strategy]]
+    names(incidence) <- get.strata()
+
+    plots[[strategy]] <- list(
+      # By age group, with the strata as labels of the x axis.
+      `Cancer incidence`=incidence,
+      # By year of age, with the ages as the names.
+      `Cancer prevalence`=setNames(trace[, 'cancer'] / alive, ages),
+      # A line per state.
+      `Cohort by state`=data.frame(Age=ages,
+                                   Healthy=trace[, 'healthy'],
+                                   Cancer=trace[, 'cancer'],
+                                   Dead=trace[, 'dead'])
+    )
+  }
+  plots
 }
 
 get.calibration.schemes <- function() {
